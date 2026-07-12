@@ -75,6 +75,11 @@ export function FeedingTrackerPage() {
       .sort((a, b) => new Date(a.stored_at).getTime() - new Date(b.stored_at).getTime())
   }, [dbStash, isDemo])
 
+  const historyFeedings = useMemo(() => {
+    const cutoff = Date.now() - 30 * 86400000
+    return feedings.filter((f) => new Date(f.fed_at).getTime() >= cutoff)
+  }, [feedings])
+
   const todayFeedings = useMemo(() => feedings.filter((f) => isToday(f.fed_at)), [feedings])
   const todayTotal = useMemo(() => todayFeedings.reduce((s, f) => s + (f.volume_ml ?? 0), 0), [todayFeedings])
   const todayAvg = useMemo(() => {
@@ -340,7 +345,10 @@ export function FeedingTrackerPage() {
       <Card>
         <CardContent className="p-6">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold">{t('feeding.history')}</h2>
+            <div>
+              <h2 className="text-lg font-semibold">{t('feeding.history')}</h2>
+              <p className="text-xs text-muted-foreground">{t('feeding.history.recent')}</p>
+            </div>
             {feedings.length > 0 && (
               <Button variant="outline" size="sm" onClick={handleExportCSV}>
                 <Download className="mr-2 h-4 w-4" />
@@ -348,11 +356,13 @@ export function FeedingTrackerPage() {
               </Button>
             )}
           </div>
-          {feedings.length === 0 ? (
-            <p className="py-4 text-center text-muted-foreground">{t('feeding.empty')}</p>
+          {historyFeedings.length === 0 ? (
+            <p className="py-4 text-center text-muted-foreground">
+              {feedings.length === 0 ? t('feeding.empty') : t('feeding.empty.recent')}
+            </p>
           ) : (
             <div className="space-y-2">
-              {feedings.map((f) => (
+              {historyFeedings.map((f) => (
                 <div key={f.id} className="flex items-center justify-between rounded-lg border p-3">
                   <div className="flex items-center gap-3">
                     <Badge variant="outline" className={TYPE_COLORS[f.feeding_type]}>
